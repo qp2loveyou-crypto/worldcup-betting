@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ 월드컵 배팅 리그</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0f1117;--bg2:#1a1d27;--bg3:#22263a;
+    --border:#2e3350;--border2:#3d4466;
+    --text:#e8eaf0;--text2:#8b90a8;
+    --blue:#3b82f6;--blue2:#1d4ed8;--blue-bg:#1e2a4a;--blue-text:#93c5fd;
+    --green:#22c55e;--green-bg:#14291f;--green-text:#86efac;
+    --red:#ef4444;--red-bg:#2a1414;--red-text:#fca5a5;
+    --yellow:#f59e0b;--yellow-bg:#2a2008;--yellow-text:#fcd34d;
+    --gold:#f59e0b;--silver:#94a3b8;--bronze:#cd7c4a;
+    --radius:10px;--radius-sm:6px;
+    --font:'Pretendard',-apple-system,'Malgun Gothic',sans-serif;
+  }
+  body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+  .app{max-width:640px;margin:0 auto;padding:1.5rem 1rem 4rem}
+  .header{text-align:center;margin-bottom:2rem;padding-top:.5rem}
+  .header h1{font-size:24px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px}
+  .header p{font-size:13px;color:var(--text2)}
+  .sync-row{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);margin-top:8px;background:var(--bg2);padding:4px 12px;border-radius:20px;border:1px solid var(--border)}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--border2)}
+  .sync-dot.live{background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .tabs{display:flex;background:var(--bg2);border-radius:var(--radius);padding:4px;gap:3px;margin-bottom:1.5rem;border:1px solid var(--border)}
+  .tab{flex:1;padding:9px 4px;font-size:13px;font-weight:500;background:transparent;border:none;cursor:pointer;color:var(--text2);border-radius:var(--radius-sm);transition:all .15s}
+  .tab.active{background:var(--bg3);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
+  .card-title{font-size:15px;font-weight:600;margin-bottom:1rem}
+  .match-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;margin-bottom:.75rem}
+  .match-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .match-title{font-size:15px;font-weight:600}
+  .match-date{font-size:12px;color:var(--text2)}
+  .odds-row{display:flex;gap:8px;margin-top:.75rem}
+  .odds-btn{flex:1;padding:11px 4px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg3);cursor:pointer;text-align:center;transition:all .15s;color:var(--text)}
+  .odds-btn:hover{border-color:var(--blue);background:#1e2a4a}
+  .odds-btn.selected{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-text)}
+  .odds-label{font-size:11px;color:var(--text2);display:block;margin-bottom:3px}
+  .odds-val{font-size:17px;font-weight:700}
+  .badge{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;white-space:nowrap}
+  .badge-open{background:var(--green-bg);color:var(--green-text)}
+  .badge-locked{background:var(--yellow-bg);color:var(--yellow-text)}
+  .badge-settled{background:var(--blue-bg);color:var(--blue-text)}
+  input,select{width:100%;padding:9px 11px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg3);color:var(--text);font-size:14px;margin-bottom:.75rem;font-family:var(--font)}
+  input:focus,select:focus{outline:none;border-color:var(--blue)}
+  input::placeholder{color:var(--text2)}
+  label{font-size:13px;color:var(--text2);display:block;margin-bottom:5px}
+  .btn{padding:9px 18px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--bg3);color:var(--text);font-size:13px;cursor:pointer;font-weight:600;transition:all .15s;font-family:var(--font)}
+  .btn:hover{background:var(--border)}
+  .btn-primary{background:var(--blue2);border-color:var(--blue2);color:#fff}
+  .btn-primary:hover{background:#1e40af}
+  .btn-success{background:#15803d;border-color:#15803d;color:#fff}
+  .btn-success:hover{background:#166534}
+  .btn-danger{background:#991b1b;border-color:#991b1b;color:#fff}
+  .btn-sm{padding:5px 11px;font-size:12px}
+  .btn-block{width:100%}
+  .shortcuts{display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap}
+  .shortcuts button{padding:4px 11px;font-size:12px;border:1px solid var(--border2);border-radius:20px;background:var(--bg3);cursor:pointer;color:var(--text2);font-family:var(--font)}
+  .shortcuts button:hover{border-color:var(--blue);color:var(--blue-text)}
+  .msg{padding:9px 13px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:.75rem;line-height:1.4}
+  .msg-error{background:var(--red-bg);color:var(--red-text);border:1px solid #7f1d1d}
+  .msg-success{background:var(--green-bg);color:var(--green-text);border:1px solid #14532d}
+  .msg-info{background:var(--blue-bg);color:var(--blue-text);border:1px solid #1e3a6e}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .lb-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+  .lb-row:last-child{border-bottom:none}
+  .lb-rank{font-size:18px;min-width:30px}
+  .lb-name{flex:1;font-size:14px;font-weight:600}
+  .reveal-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .reveal-row:last-child{border-bottom:none}
+  .hidden{display:none}
+  .strike{text-decoration:line-through;color:var(--text2)}
+  .admin-match-row{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.5rem;background:var(--bg3)}
+  .admin-match-info{flex:1;font-size:13px}
+  .admin-match-name{font-weight:600}
+  .admin-match-sub{color:var(--text2);font-size:12px;margin-top:2px}
+  .overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);z-index:100;align-items:center;justify-content:center}
+  .modal{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border2);padding:1.5rem;width:92%;max-width:380px;position:relative;max-height:90vh;overflow-y:auto}
+  .modal-close{position:absolute;top:13px;right:13px;background:none;border:none;cursor:pointer;font-size:19px;color:var(--text2);line-height:1}
+  .modal-title{font-size:16px;font-weight:700;margin-bottom:.5rem}
+  .modal-sub{font-size:13px;color:var(--text2);margin-bottom:1rem}
+  .section-label{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--text2);text-transform:uppercase;margin-bottom:.75rem}
+  .divider{border:none;border-top:1px solid var(--border);margin:1rem 0}
+  @media(max-width:480px){.odds-val{font-size:15px}.match-title{font-size:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>🎩 어른들의 리그</h1>
+    <p>참가비 100,000원 · 시드머니 2,000,000원 · WINNER TAKES IT ALL</p>
+    <div style="margin-top:8px">
+      <span class="sync-row">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span id="sync-label">연결 중...</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('bets')">배팅하기</button>
+    <button class="tab" onclick="showTab('results')">경기결과</button>
+    <button class="tab" onclick="showTab('rank')">순위표</button>
+    <button class="tab" onclick="showTab('seasons')">🏆 시즌기록</button>
+    <button class="tab" onclick="showTab('loan')">대출받기</button>
+    <button class="tab" onclick="showTab('admin')">관리자</button>
+  </div>
+
+  <div id="tab-bets">
+    <div id="bets-msg"></div>
+    <details style="margin-bottom:1rem">
+      <summary style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;font-size:13px;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center">
+        ⚡ 어드밴티지 & 패널티 정보 보기 <span style="color:var(--text2);font-weight:400">▼</span>
+      </summary>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:1rem;font-size:12px;line-height:1.9;color:var(--text2)">
+        <div style="margin-bottom:.5rem;color:var(--text);font-weight:600">🌟 류혁수의 은총 (버프)</div>
+        당첨 시 <b>5% + 레벨%</b> 확률 발동 → 이후 5경기 당첨금 +5% 가산<br>
+        <div style="margin-top:.5rem;margin-bottom:.5rem;color:var(--text);font-weight:600">🔥 연승 어드밴티지</div>
+        2연승: +5% / 3연승: +10% / 4연승: +15% / 5연승~: +20%... (5%씩 증가)<br>
+        <div style="margin-top:.5rem;margin-bottom:.5rem;color:var(--text);font-weight:600">⭐ 레벨 어드밴티지</div>
+        레벨 N → 당첨금 +N% 가산 / 류혁수의 은총 발동률 +N%<br>
+        <div style="margin-top:.5rem;margin-bottom:.5rem;color:var(--text);font-weight:600">💳 대출</div>
+        최대 100만원 대출 · 매일 자정 10% 이자 · 당일 상환 불가<br>
+      </div>
+    </details>
+    <div id="matches-list"><div class="msg msg-info">데이터 불러오는 중...</div></div>
+  </div>
+
+  <div id="tab-results" class="hidden">
+    <div id="results-date-tabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem"></div>
+    <div id="results-list"></div>
+  </div>
+
+  <div id="tab-rank" class="hidden">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem">
+        <div class="card-title" style="margin-bottom:0">💰 잔액 순위</div>
+        <button id="nickname-toggle-btn" onclick="toggleNicknames()" style="font-size:11px;padding:4px 10px;border:1px solid var(--border2);border-radius:20px;background:var(--bg3);color:var(--text2);cursor:pointer">😈 수식어 숨김</button>
+      </div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem;margin-top:.25rem">현금잔금 (배팅중 금액 및 대출을 포함한 모든 잔금) · 🏆 1위가 전액 가져가는 리그</p>
+      <div id="leaderboard-list"></div>
+    </div>
+  </div>
+
+  <div id="tab-seasons" class="hidden">
+    <div id="seasons-list"></div>
+  </div>
+
+  <div id="tab-loan" class="hidden">
+    <div class="card">
+      <div class="card-title">💳 대출 안내</div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6">
+        • 1인당 최대 <b style="color:var(--text)">1,000,000원</b>까지 대출 가능<br>
+        • 매일 자정(00:00) 기준, 남은 대출금에 <b style="color:var(--red-text)">10% 이자</b>가 추가됩니다 (복리)<br>
+        • 오늘 빌린 돈은 오늘 갚을 수 없으며, 최소 1일이 지나야 상환 가능합니다<br>
+        • 대출금은 순위표 잔액에서 차감되어 표시됩니다
+      </p>
+    </div>
+    <div class="card">
+      <div class="card-title">대출 신청 / 상환</div>
+      <label>참가자 이름</label>
+      <select id="loan-name-select">
+        <option value="">이름 선택...</option>
+      </select>
+      <label>비밀번호</label>
+      <input type="password" id="loan-pw-input" placeholder="개인 비밀번호">
+      <div id="loan-status-msg"></div>
+      <label>대출 / 상환 금액 (원)</label>
+      <div class="shortcuts">
+        <button onclick="setLoanAmt(100000)">10만</button>
+        <button onclick="setLoanAmt(300000)">30만</button>
+        <button onclick="setLoanAmt(500000)">50만</button>
+        <button onclick="setLoanAmt(1000000)">100만(최대)</button>
+      </div>
+      <input type="number" id="loan-amount-input" placeholder="대출/상환 금액 (원)" min="1000" step="1000">
+      <div id="loan-modal-msg"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1" onclick="requestLoan()">대출 받기</button>
+        <button class="btn btn-success" style="flex:1" onclick="repayLoan()">대출 상환</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">전체 대출 현황</div>
+      <div id="loan-status-list"></div>
+    </div>
+  </div>
+
+  <div id="tab-admin" class="hidden">
+    <div id="admin-login-section">
+      <div class="card">
+        <div class="card-title">🔐 관리자 로그인</div>
+        <label>관리자 비밀번호</label>
+        <input type="password" id="admin-pw-input" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')adminLogin()">
+        <div id="admin-login-msg"></div>
+        <button class="btn btn-primary btn-block" onclick="adminLogin()">로그인</button>
+      </div>
+    </div>
+    <div id="admin-panel" class="hidden">
+      <div class="card">
+        <div class="card-title">⚽ 경기 추가</div>
+        <div class="grid2">
+          <div><label>팀1</label><input type="text" id="team1-input" placeholder="예: 한국"></div>
+          <div><label>팀2</label><input type="text" id="team2-input" placeholder="예: 멕시코"></div>
+        </div>
+        <label>경기 날짜/시간</label>
+        <input type="text" id="match-date-input" placeholder="예: 2026.06.18 21:00">
+        <div class="grid3">
+          <div><label>팀1 승 배당</label><input type="number" id="odd1-input" placeholder="1.80" step="0.01" min="1"></div>
+          <div><label>무승부 배당</label><input type="number" id="odd-draw-input" placeholder="3.20" step="0.01" min="1"></div>
+          <div><label>팀2 승 배당</label><input type="number" id="odd2-input" placeholder="2.10" step="0.01" min="1"></div>
+        </div>
+        <div id="add-match-msg"></div>
+        <button class="btn btn-primary btn-block" onclick="addMatch()">경기 추가</button>
+      </div>
+      <div class="card">
+        <div class="card-title">👥 참가자 관리</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">현재 참가자: <span id="current-participants-list"></span></p>
+        <label>중도 참가자 추가 (참가비 100,000원 확인 후)</label>
+        <input type="text" id="new-participant-input" placeholder="이름 입력">
+        <div id="add-participant-msg"></div>
+        <button class="btn btn-success btn-block" onclick="addParticipant()">참가자 추가</button>
+        <hr style="border:none;border-top:1px solid var(--border);margin:.75rem 0">
+        <label>참가자 제거</label>
+        <select id="remove-participant-select"><option value="">선택...</option></select>
+        <div style="margin-top:.5rem"><button class="btn btn-danger btn-sm" onclick="removeParticipant()">참가자 제거</button></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 경기 관리</div>
+        <div id="admin-matches-list"><p style="color:var(--text2);font-size:13px">등록된 경기 없음</p></div>
+      </div>
+      <div class="card">
+        <div class="card-title">💸 잔액 조정</div>
+        <div class="grid2">
+          <div>
+            <label>참가자</label>
+            <select id="adjust-name-select">
+              <option value="">이름 선택...</option>
+            </select>
+          </div>
+          <div>
+            <label>조정 방식</label>
+            <select id="adjust-type-select">
+              <option value="add">증액 (+)</option>
+              <option value="sub">차감 (-)</option>
+              <option value="set">직접 설정</option>
+            </select>
+          </div>
+        </div>
+        <label>금액 (원)</label>
+        <input type="number" id="adjust-amount-input" placeholder="예: 200000" min="0" step="1000">
+        <div id="adjust-msg"></div>
+        <button class="btn btn-success btn-block" onclick="adjustBalance()">잔액 조정 적용</button>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:var(--red-text)">⚠️ 시즌 관리</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:.75rem">현재 순위를 시즌 기록으로 저장한 뒤, 새 시즌을 시작합니다. 경기/배팅/잔액이 초기화됩니다.</p>
+        <label>저장할 시즌 이름</label>
+        <input type="text" id="season-name-input" placeholder="예: 친선리그 시즌 1" style="margin-bottom:.5rem">
+        <div id="season-msg"></div>
+        <button class="btn btn-primary btn-block" onclick="archiveSeason()" style="margin-bottom:.5rem">📦 현재 순위 저장 후 새 시즌 시작</button>
+        <hr style="border:none;border-top:1px solid var(--border);margin:.75rem 0">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:.75rem">저장 없이 모든 데이터를 완전 초기화합니다.</p>
+        <button class="btn btn-danger btn-sm" onclick="resetAll()">전체 초기화 (저장 없음)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 배팅 모달 -->
+<div class="overlay" id="bet-modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeBetModal()">✕</button>
+    <div class="modal-title" id="bet-modal-title"></div>
+    <div class="modal-sub" id="bet-modal-choice"></div>
+    <label>참가자 이름</label>
+    <select id="bet-name-select">
+      <option value="">이름 선택...</option>
+    </select>
+    <label>비밀번호</label>
+    <input type="password" id="bet-pw-input" placeholder="개인 비밀번호 (최초 입력 시 자동 설정)">
+    <div id="bet-blessing-msg"></div>
+    <label>배팅금액</label>
+    <div class="shortcuts">
+      <button onclick="setAmt(50000)">5만</button>
+      <button onclick="setAmt(100000)">10만</button>
+      <button onclick="setAmt(200000)">20만</button>
+      <button onclick="setAmt(300000)">30만</button>
+      <button onclick="setAmt(500000)">50만</button>
+      <button onclick="setAmtAll()">전액</button>
+    </div>
+    <input type="number" id="bet-amount-input" placeholder="배팅금액 (원)" min="1000" step="1000">
+    <div id="bet-modal-msg"></div>
+    <button class="btn btn-primary btn-block" onclick="submitBet()">배팅 확인</button>
+  </div>
+</div>
+
+<!-- 배당 수정 모달 -->
+<div class="overlay" id="edit-odds-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('edit-odds-overlay').style.display='none'">✕</button>
+    <div id="edit-odds-content"></div>
+  </div>
+</div>
+
+<!-- 결과 입력 모달 -->
+<div class="overlay" id="result-modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeResultModal()">✕</button>
+    <div id="result-modal-content"></div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PW = 'admin1234';
+const INITIAL_BALANCE = 2000000;
+const DEFAULT_PARTICIPANTS = ['조종원','박도영','박영순'];
+const STORAGE_KEY = "wc-bet-local";
+
+// ── Firebase Realtime DB (무료) 대신 localStorage 기반 공유
+// 실제 실시간 공유를 위해 아래 Firebase 설정을 사용합니다.
+// 이 파일은 localStorage 기반으로 동작하며 같은 기기에서만 공유됩니다.
+// 실시간 다중 기기 공유를 원하면 아래 Firebase 섹션을 활성화하세요.
+
+let state = { matches:[], bets:{}, balances:{}, userPasswords:{}, loans:{}, blessings:{}, streaks:{}, levels:{}, nicknames:{}, participants:['조종원','박도영','박영순'], seasons:[] };
+let adminLoggedIn = false;
+let currentBetMatch = null;
+let currentBetChoice = null;
+let selectedResult = null;
+let hideNicknames = false;
+
+function toggleNicknames() {
+  hideNicknames = !hideNicknames;
+  const btn = document.getElementById('nickname-toggle-btn');
+  if (btn) {
+    btn.textContent = hideNicknames ? '😈 수식어 보기' : '😈 수식어 숨김';
+    btn.style.color = hideNicknames ? 'var(--green-text)' : 'var(--text2)';
+    btn.style.borderColor = hideNicknames ? 'var(--green)' : 'var(--border2)';
+  }
+  renderLeaderboard();
+}
+
+// ── LocalStorage 기반 저장 (오프라인 fallback)
+function loadLocal() {
+  // localStorage 캐시 비활성화 - Firebase가 유일한 데이터 소스
+  const PARTICIPANTS = state.participants || DEFAULT_PARTICIPANTS;
+  PARTICIPANTS.forEach(p => { if(state.balances[p] === undefined) state.balances[p] = INITIAL_BALANCE; });
+}
+
+function saveLocal() {
+  // localStorage 캐시 비활성화 - Firebase가 유일한 데이터 소스
+}
+
+// ── Firebase 실시간 연동 (선택적 활성화)
+// 아래 firebaseConfig를 본인의 Firebase 프로젝트로 교체하면 실시간 공유 가능
+const FIREBASE_URL = 'https://worldcup-sibal-default-rtdb.firebaseio.com'; // 예: 'https://your-project-default-rtdb.firebaseio.com'
+
+async function loadFirebase() {
+  if (!FIREBASE_URL) return false;
+  try {
+    const r = await fetch(`${FIREBASE_URL}/state-v2.json`);
+    if (!r.ok) return false;
+    const saved = await r.json();
+    if (saved) {
+      state = Object.assign({matches:[],bets:{},balances:{},userPasswords:{},loans:{},blessings:{},curses:{},streaks:{},levels:{},nicknames:{},participants:['조종원','박도영','박영순'],seasons:[]}, saved);
+      const PARTICIPANTS = state.participants || DEFAULT_PARTICIPANTS;
+  PARTICIPANTS.forEach(p => { if(state.balances[p] === undefined) state.balances[p] = INITIAL_BALANCE; });
+    }
+    return true;
+  } catch(e){ return false; }
+}
+
+async function saveFirebase() {
+  if (!FIREBASE_URL) return false;
+  try {
+    const payload = Object.assign({}, state, { _secret: 'dongYoung2026!' });
+    const r = await fetch(`${FIREBASE_URL}/state-v2.json`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    return r.ok;
+  } catch(e){ return false; }
+}
+
+async function loadState() {
+  loadLocal();
+  const ok = await loadFirebase();
+  setSyncStatus(ok || !FIREBASE_URL);
+  const interestApplied = applyLoanInterest();
+  if (interestApplied) {
+    await saveState();
+  }
+  renderAll();
+}
+
+async function saveState() {
+  saveLocal();
+  const ok = await saveFirebase();
+  setSyncStatus(ok || !FIREBASE_URL);
+}
+
+function setSyncStatus(live) {
+  document.getElementById('sync-dot').className = 'sync-dot' + (live?' live':'');
+  document.getElementById('sync-label').textContent = FIREBASE_URL
+    ? (live ? '실시간 공유 중' : '연결 실패 (로컬 저장)')
+    : '로컬 저장 모드';
+}
+
+// ── 탭 전환
+function showTab(t) {
+  ['bets','results','rank','seasons','loan','admin'].forEach(x => {
+    document.getElementById('tab-'+x).classList.toggle('hidden', x!==t);
+  });
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', ['bets','results','rank','seasons','loan','admin'][i]===t);
+  });
+  if (t === 'loan') renderLoanStatusList();
+  if (t === 'seasons') renderSeasons();
+}
+
+// ── 관리자
+function adminLogin() {
+  if (document.getElementById('admin-pw-input').value === ADMIN_PW) {
+    adminLoggedIn = true;
+    document.getElementById('admin-login-section').classList.add('hidden');
+    document.getElementById('admin-panel').classList.remove('hidden');
+    renderAdminPanel();
+  } else {
+    document.getElementById('admin-login-msg').innerHTML = '<div class="msg msg-error">비밀번호가 틀렸습니다.</div>';
+  }
+}
+
+
+
+
+function renderAdminPanel() {
+  if (!adminLoggedIn) return;
+  const PARTICIPANTS = state.participants || DEFAULT_PARTICIPANTS;
+  const cpEl = document.getElementById('current-participants-list');
+  if (cpEl) cpEl.textContent = PARTICIPANTS.join(', ');
+  const rpSel = document.getElementById('remove-participant-select');
+  if (rpSel) rpSel.innerHTML = '<option value="">선택...</option>' + PARTICIPANTS.map(n=>`<option>${n}</option>`).join('');
+  const el = document.getElementById('admin-matches-list');
+  if (!el) return;
+  if (!state.matches.length) { el.innerHTML='<p style="color:var(--text2);font-size:13px">등록된 경기 없음</p>'; return; }
+  el.innerHTML = state.matches.map(m => {
+    let btns = '';
+    if (m.status==='open') {
+      btns=`<button class="btn btn-sm btn-primary" onclick="lockMatch('${m.id}')">배팅 공개</button>
+            <button class="btn btn-sm" style="margin-left:4px" onclick="openEditOdds('${m.id}')">배당 수정</button>
+            <button class="btn btn-sm btn-danger" style="margin-left:4px" onclick="cancelMatch('${m.id}')">취소</button>`;
+    } else if (m.status==='locked') {
+      btns=`<button class="btn btn-sm btn-success" onclick="openResultSettle('${m.id}')">결과 입력</button>
+            <button class="btn btn-sm" style="margin-left:4px" onclick="reopenMatch('${m.id}')">배팅 재오픈</button>
+            <button class="btn btn-sm btn-danger" style="margin-left:4px" onclick="cancelMatch('${m.id}')">취소</button>`;
+    } else {
+      btns=`<span class="badge badge-settled">정산완료</span>`;
+    }
+    const bc={open:'badge-open',locked:'badge-locked',settled:'badge-settled'}[m.status]||'';
+    const bl={open:'배팅중',locked:'공개됨',settled:'정산완료'}[m.status]||'';
+    return `<div class="admin-match-row">
+      <div class="admin-match-info">
+        <div class="admin-match-name">${m.team1} vs ${m.team2}</div>
+        <div class="admin-match-sub">${m.date} · ${m.odd1} / ${m.oddDraw} / ${m.odd2}</div>
+      </div>
+      <span class="badge ${bc}" style="margin-right:6px">${bl}</span>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;flex-shrink:0">${btns}</div>
+    </div>`;
+  }).join('');
+}
+
+async function addMatch() {
+  const team1 = document.getElementById('team1-input').value.trim();
+  const team2 = document.getElementById('team2-input').value.trim();
+  const date = document.getElementById('match-date-input').value.trim();
+  const odd1 = parseFloat(document.getElementById('odd1-input').value);
+  const oddDraw = parseFloat(document.getElementById('odd-draw-input').value);
+  const odd2 = parseFloat(document.getElementById('odd2-input').value);
+  const msgEl = document.getElementById('add-match-msg');
+  if (!team1||!team2||!date||isNaN(odd1)||isNaN(oddDraw)||isNaN(odd2)) {
+    msgEl.innerHTML='<div class="msg msg-error">모든 항목을 입력하세요.</div>'; return;
+  }
+  state.matches.push({id:'m'+Date.now(), team1, team2, date, odd1:odd1.toFixed(2), oddDraw:oddDraw.toFixed(2), odd2:odd2.toFixed(2), status:'open'});
+  await saveState();
+  renderAdminPanel(); renderMatchList();
+  msgEl.innerHTML='<div class="msg msg-success">경기가 추가되었습니다.</div>';
+  ['team1-input','team2-input','match-date-input','odd1-input','odd-draw-input','odd2-input'].forEach(id => document.getElementById(id).value='');
+  setTimeout(() => { msgEl.innerHTML=''; }, 2500);
+}
+
+async function addParticipant() {
+  const name = document.getElementById('new-participant-input').value.trim();
+  const msgEl = document.getElementById('add-participant-msg');
+  if (!name) { msgEl.innerHTML='<div class="msg msg-error">이름을 입력하세요.</div>'; return; }
+  if (state.participants.includes(name)) { msgEl.innerHTML='<div class="msg msg-error">이미 등록된 참가자입니다.</div>'; return; }
+  state.participants.push(name);
+  if (state.balances[name] === undefined) state.balances[name] = INITIAL_BALANCE;
+  await saveState(); renderAll();
+  document.getElementById('new-participant-input').value = '';
+  msgEl.innerHTML=`<div class="msg msg-success">✅ ${name}님 참가 완료! 시드머니 ${INITIAL_BALANCE.toLocaleString()}원 지급</div>`;
+  setTimeout(()=>{ msgEl.innerHTML=''; }, 3000);
+}
+
+async function removeParticipant() {
+  const name = document.getElementById('remove-participant-select').value;
+  if (!name || !confirm(`${name}님을 참가자 목록에서 제거하겠습니까?`)) return;
+  state.participants = state.participants.filter(p => p !== name);
+  await saveState(); renderAll();
+}
+
+async function lockMatch(id) {
+  const m = state.matches.find(x => x.id===id);
+  if (!m || !confirm(`"${m.team1} vs ${m.team2}" 배팅을 공개하겠습니까?`)) return;
+  m.status = 'locked';
+  await saveState(); renderAll();
+}
+
+async function reopenMatch(id) {
+  const m = state.matches.find(x => x.id===id);
+  if (!m || !confirm(`"${m.team1} vs ${m.team2}" 배팅을 다시 오픈하겠습니까?`)) return;
+  m.status = 'open';
+  await saveState(); renderAll();
+}
+
+async function cancelMatch(id) {
+  const m = state.matches.find(x => x.id===id);
+  if (!m || !confirm(`"${m.team1} vs ${m.team2}" 경기를 취소하겠습니까?\n배팅 금액이 모두 환불됩니다.`)) return;
+  (state.bets[id] || []).forEach(b => {
+    state.balances[b.name] = (state.balances[b.name] || 0) + b.amount;
+  });
+  state.matches = state.matches.filter(x => x.id!==id);
+  delete state.bets[id];
+  await saveState(); renderAll();
+}
+
+async function deleteMatch(id) {
+  if (!confirm('이 경기를 삭제하겠습니까?')) return;
+  state.matches = state.matches.filter(x => x.id!==id);
+  delete state.bets[id];
+  await saveState(); renderAll();
+}
+
+function openEditOdds(id) {
+  const m = state.matches.find(x => x.id===id);
+  const overlay = document.getElementById('edit-odds-overlay');
+  document.getElementById('edit-odds-content').innerHTML = `
+    <div class="modal-title" style="margin-bottom:.75rem">⚙️ 배당 수정</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:1rem">${m.team1} vs ${m.team2}</div>
+    <div class="grid3">
+      <div><label>${m.team1} 승</label><input type="number" id="edit-odd1" value="${m.odd1}" step="0.01" min="1"></div>
+      <div><label>무승부</label><input type="number" id="edit-odd-draw" value="${m.oddDraw}" step="0.01" min="1"></div>
+      <div><label>${m.team2} 승</label><input type="number" id="edit-odd2" value="${m.odd2}" step="0.01" min="1"></div>
+    </div>
+    <div id="edit-odds-msg"></div>
+    <button class="btn btn-primary btn-block" onclick="saveEditOdds('${id}')">저장</button>`;
+  overlay.style.display = 'flex';
+}
+
+async function saveEditOdds(id) {
+  const m = state.matches.find(x => x.id===id);
+  const o1 = parseFloat(document.getElementById('edit-odd1').value);
+  const od = parseFloat(document.getElementById('edit-odd-draw').value);
+  const o2 = parseFloat(document.getElementById('edit-odd2').value);
+  if (isNaN(o1)||isNaN(od)||isNaN(o2)) { document.getElementById('edit-odds-msg').innerHTML='<div class="msg msg-error">올바른 값을 입력하세요.</div>'; return; }
+  m.odd1 = o1.toFixed(2); m.oddDraw = od.toFixed(2); m.odd2 = o2.toFixed(2);
+  await saveState();
+  document.getElementById('edit-odds-overlay').style.display = 'none';
+  renderAll();
+}
+
+async function archiveSeason() {
+  const seasonName = document.getElementById('season-name-input').value.trim();
+  const msgEl = document.getElementById('season-msg');
+  if (!seasonName) { msgEl.innerHTML='<div class="msg msg-error">시즌 이름을 입력하세요.</div>'; return; }
+  if (!confirm(`"${seasonName}" 으로 현재 순위를 저장하고 새 시즌을 시작하겠습니까?\n경기/배팅/잔액이 초기화됩니다.`)) return;
+
+  // 현재 순위 스냅샷 생성
+  const PARTICIPANTS = state.participants || DEFAULT_PARTICIPANTS;
+  const snapshot = [...PARTICIPANTS].sort((a,b) => {
+    const ta = (state.balances[a]??0) + getPendingBetAmount(a) - getLoanAmount(a);
+    const tb = (state.balances[b]??0) + getPendingBetAmount(b) - getLoanAmount(b);
+    return tb - ta;
+  }).map((name, i) => ({
+    rank: i + 1,
+    name,
+    nickname: state.nicknames && state.nicknames[name],
+    balance: state.balances[name] ?? 0,
+    total: getTotalBalance(name),
+    level: getLevel(name),
+    streak: (state.streaks && state.streaks[name]) || 0
+  }));
+
+  if (!state.seasons) state.seasons = [];
+  state.seasons.push({
+    name: seasonName,
+    date: todayKST(),
+    snapshot
+  });
+
+  // 새 시즌 초기화 (참가자·비밀번호·닉네임·레벨·시즌기록 유지, 나머지 리셋)
+  const kept = {
+    participants: state.participants,
+    userPasswords: state.userPasswords,
+    nicknames: state.nicknames,
+    levels: state.levels,
+    seasons: state.seasons
+  };
+  state = Object.assign({
+    matches:[], bets:{}, balances:{}, loans:{}, blessings:{}, streaks:{}
+  }, kept);
+  state.participants.forEach(p => { state.balances[p] = INITIAL_BALANCE; });
+
+  await saveState();
+  renderAll();
+  document.getElementById('season-name-input').value = '';
+  msgEl.innerHTML=`<div class="msg msg-success">✅ "${seasonName}" 저장 완료! 새 시즌이 시작되었습니다.</div>`;
+  setTimeout(()=>{ msgEl.innerHTML=''; }, 4000);
+}
+
+function renderSeasons() {
+  const el = document.getElementById('seasons-list');
+  if (!state.seasons || !state.seasons.length) {
+    el.innerHTML='<div class="card"><p style="color:var(--text2);font-size:14px;text-align:center;padding:1.5rem 0">저장된 시즌 기록이 없습니다.</p></div>';
+    return;
+  }
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = [...state.seasons].reverse().map(season => {
+    const rows = season.snapshot.map((p, i) => {
+      const diff = p.total - INITIAL_BALANCE;
+      const diffStr = diff===0?'±0':diff>0?'+'+diff.toLocaleString():diff.toLocaleString();
+      const diffColor = diff>0?'var(--green)':diff<0?'var(--red)':'var(--text2)';
+      const nameDisplay = p.nickname ? `<span style="color:#f87171;font-size:12px">${p.nickname}</span> ${p.name}` : p.name;
+      const streakStr = p.streak >= 2 ? `<span style="font-size:11px;color:var(--green-text)"> 🔥${p.streak}연승</span>`
+        : p.streak <= -2 ? `<span style="font-size:11px;color:var(--red-text)"> 🥶${Math.abs(p.streak)}연패</span>` : '';
+      return `<div class="lb-row">
+        <span class="lb-rank">${medals[i]||i+1}</span>
+        <span class="lb-name">${nameDisplay}${streakStr} <span style="font-size:11px;font-weight:600;color:var(--blue-text);background:var(--blue-bg);padding:2px 6px;border-radius:10px;margin-left:4px">Lv.${p.level}</span></span>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:700">${p.total.toLocaleString()}원</div>
+          <div style="font-size:12px;color:${diffColor}">${diffStr}원</div>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+        <div class="card-title" style="margin-bottom:0">🏆 ${season.name}</div>
+        <span style="font-size:12px;color:var(--text2)">${season.date}</span>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+
+async function resetAll() {
+  if (!confirm('정말 모든 데이터를 초기화하겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+  const kept = { participants: state.participants, seasons: state.seasons };
+  state = Object.assign({ matches:[], bets:{}, balances:{}, userPasswords:{}, loans:{}, blessings:{}, streaks:{}, levels:{}, nicknames:{} }, kept);
+  const PARTICIPANTS = state.participants || DEFAULT_PARTICIPANTS;
+  PARTICIPANTS.forEach(p => state.balances[p] = INITIAL_BALANCE);
+  await saveState();
+  renderAll();
+}
+
+// ── 렌더링
+function populateSelects() {
+  const PARTICIPANTS = state.participants || DEFAULT_PARTICIPANTS;
+  const opts = '<option value="">이름 선택...</option>' + PARTICIPANTS.map(n=>`<option>${n}</option>`).join('');
+  ['bet-name-select','loan-name-select','adjust-name-select'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { const prev = el.value; el.innerHTML = opts; el.value = prev; }
+  });
+}
+
+function renderAll() {
+  populateSelects();
+  renderMatchList();
+  renderResults();
+  renderLeaderboard();
+  if (adminLoggedIn) renderAdminPanel();
+}
+
+function renderMatchList() {
+  const el = document.getElementById('matches-list');
+  const open = state.matches
+    .filter(m => m.status==='open' || m.status==='locked')
+    .sort((a,b) => a.date.localeCompare(b.date));
+  if (!open.length) {
+    el.innerHTML = '<p style="color:var(--text2);font-size:14px;text-align:center;padding:2.5rem 0">배팅 가능한 경기가 없습니다.<br><span style="font-size:12px">관리자에게 경기 추가를 요청하세요.</span></p>';
+    return;
+  }
+  el.innerHTML = open.map(m => {
+    const bets = state.bets[m.id] || [];
+    const revealed = m.status === 'locked';
+    let betsHtml = '';
+    if (revealed) {
+      const rows = bets.map(b =>
+        `<div class="reveal-row"><span style="font-weight:600">${b.name}</span><span style="font-weight:600">${b.choiceLabel}</span><span style="color:var(--text2)">${Number(b.amount).toLocaleString()}원</span></div>`
+      ).join('');
+      betsHtml = `<div style="margin-top:.9rem;border-top:1px solid var(--border);padding-top:.75rem">
+        <div style="font-size:12px;font-weight:700;color:var(--yellow-text);margin-bottom:.6rem">🎉 배팅 현황 공개!</div>
+        ${rows || '<div style="font-size:13px;color:var(--text2)">배팅 없음</div>'}
+      </div>`;
+    } else {
+      betsHtml = `<div style="font-size:12px;color:var(--text2);margin-top:.5rem">${bets.length}명 배팅 완료 · 경기 시작 전 공개됩니다</div>`;
+    }
+    const canBet = m.status === 'open';
+    return `<div class="match-card">
+      <div class="match-header">
+        <span class="match-title">${m.team1} vs ${m.team2}</span>
+        <span class="badge ${m.status==='open'?'badge-open':'badge-locked'}">${m.status==='open'?'배팅중':'공개됨'}</span>
+      </div>
+      <div class="match-date">📅 ${m.date}</div>
+      ${canBet ? `<div class="odds-row">
+        <button class="odds-btn" onclick="openBetModal('${m.id}','team1','${m.team1} 승')">
+          <span class="odds-label">${m.team1} 승</span><span class="odds-val">${m.odd1}</span>
+        </button>
+        <button class="odds-btn" onclick="openBetModal('${m.id}','draw','무승부')">
+          <span class="odds-label">무승부</span><span class="odds-val">${m.oddDraw}</span>
+        </button>
+        <button class="odds-btn" onclick="openBetModal('${m.id}','team2','${m.team2} 승')">
+          <span class="odds-label">${m.team2} 승</span><span class="odds-val">${m.odd2}</span>
+        </button>
+      </div>` : ''}
+      ${betsHtml}
+    </div>`;
+  }).join('');
+}
+
+function openBetModal(matchId, choice, choiceLabel) {
+  currentBetMatch = matchId; currentBetChoice = {key:choice, label:choiceLabel};
+  const m = state.matches.find(x => x.id===matchId);
+  const odds = choice==='team1'?m.odd1:choice==='draw'?m.oddDraw:m.odd2;
+  document.getElementById('bet-modal-title').textContent = `${m.team1} vs ${m.team2}`;
+  document.getElementById('bet-modal-choice').textContent = `선택: ${choiceLabel} · 배당 ${odds}배`;
+  document.getElementById('bet-pw-input').value = '';
+  document.getElementById('bet-amount-input').value = '';
+  document.getElementById('bet-modal-msg').innerHTML = '';
+  document.getElementById('bet-blessing-msg').innerHTML = '';
+  document.getElementById('bet-name-select').value = '';
+  document.getElementById('bet-modal-overlay').style.display = 'flex';
+}
+function closeBetModal() { document.getElementById('bet-modal-overlay').style.display = 'none'; }
+function setAmt(v) { document.getElementById('bet-amount-input').value = v; }
+function setAmtAll() {
+  const name = document.getElementById('bet-name-select').value;
+  if (name) setAmt(state.balances[name] || 0);
+}
+
+async function submitBet() {
+  const name = document.getElementById('bet-name-select').value;
+  const pw = document.getElementById('bet-pw-input').value;
+  const amt = parseInt(document.getElementById('bet-amount-input').value);
+  const msgEl = document.getElementById('bet-modal-msg');
+  if (!name) { msgEl.innerHTML='<div class="msg msg-error">이름을 선택하세요.</div>'; return; }
+  if (!pw) { msgEl.innerHTML='<div class="msg msg-error">비밀번호를 입력하세요.</div>'; return; }
+  if (!amt || amt < 1000) { msgEl.innerHTML='<div class="msg msg-error">최소 1,000원 이상 배팅하세요.</div>'; return; }
+  if (state.userPasswords[name] && state.userPasswords[name] !== pw) {
+    msgEl.innerHTML='<div class="msg msg-error">비밀번호가 맞지 않습니다.</div>'; return;
+  }
+  const bal = state.balances[name] ?? 0;
+  if (amt > bal) { msgEl.innerHTML=`<div class="msg msg-error">잔액 부족 (현재 ${bal.toLocaleString()}원)</div>`; return; }
+
+  const matchBets = state.bets[currentBetMatch] || [];
+  if (matchBets.find(b => b.name===name)) { msgEl.innerHTML='<div class="msg msg-error">이미 이 경기에 배팅하셨습니다.</div>'; return; }
+  const m = state.matches.find(x => x.id===currentBetMatch);
+  const odds = currentBetChoice.key==='team1'?m.odd1:currentBetChoice.key==='draw'?m.oddDraw:m.odd2;
+  if (!state.userPasswords[name]) state.userPasswords[name] = pw;
+  if (!state.bets[currentBetMatch]) state.bets[currentBetMatch] = [];
+
+  // 🌟 류혁수의 은총: 남은 버프가 있으면 이번 배팅에 적용하고 1회 차감
+  if (!state.blessings) state.blessings = {};
+  const blessingLeft = state.blessings[name] || 0;
+  const useBlessing = blessingLeft > 0;
+  const betObj = {name, amount:amt, choice:currentBetChoice.key, choiceLabel:currentBetChoice.label, odds:parseFloat(odds)};
+  if (useBlessing) {
+    betObj.blessingApplied = true;
+    state.blessings[name] = blessingLeft - 1;
+  }
+  state.bets[currentBetMatch].push(betObj);
+  state.balances[name] -= amt;
+  // 경험치 획득: 배팅액 / 10000
+  const expGain = amt / 10000;
+  const levelResult = addExp(name, expGain);
+  await saveState();
+  closeBetModal();
+  renderMatchList();
+  const blessingMsg = useBlessing
+    ? ` <span style="color:var(--yellow-text)">🌟 류혁수의 은총 적용! (남은 횟수 ${state.blessings[name]}회)</span>`
+    : '';
+  const levelMsg = levelResult.leveledUp
+    ? ` <span style="color:var(--blue-text);font-weight:700">⭐ 레벨업! Lv.${levelResult.oldLevel} → Lv.${levelResult.newLevel}</span>`
+    : '';
+  document.getElementById('bets-msg').innerHTML = `<div class="msg msg-success">✅ ${name}님 배팅 완료! ${amt.toLocaleString()}원 · ${currentBetChoice.label} ${odds}배 (EXP +${expGain.toLocaleString()})${blessingMsg}${levelMsg}</div>`;
+  setTimeout(() => { document.getElementById('bets-msg').innerHTML=''; }, 4500);
+}
+
+async function settleMatch(matchId) {
+  if (!selectedResult) { document.getElementById('settle-msg').innerHTML='<div class="msg msg-error">결과를 선택하세요.</div>'; return; }
+  const m = state.matches.find(x => x.id===matchId);
+  m.result = selectedResult; m.status = 'settled';
+  if (!state.blessings) state.blessings = {};
+  if (!state.streaks) state.streaks = {};
+  (state.bets[matchId]||[]).forEach(b => {
+    const prevStreak = state.streaks[b.name] || 0;
+    if (b.choice===selectedResult) {
+      let won = Math.floor(b.amount*b.odds);
+      b.won = true;
+      // 연승 어드밴티지: (연승수-1)*5%
+      if (prevStreak >= 2) {
+        const rate = (prevStreak - 1) * 0.05;
+        const bonus = Math.floor(won * rate);
+        won += bonus;
+        b.streakBonus = bonus;
+        b.streakCount = prevStreak;
+      }
+      // 은총 버프 적용
+      if (b.blessingApplied) {
+        const bonus = Math.floor(won * 0.05);
+        won += bonus;
+        b.blessingBonus = bonus;
+      }
+      // 레벨 부가효과: 레벨% 가산
+      const level = getLevel(b.name);
+      if (level > 1) {
+        const levelBonus = Math.floor(won * (level * 0.01));
+        won += levelBonus;
+        b.levelBonus = levelBonus;
+        b.levelAtWin = level;
+      }
+      state.balances[b.name] = (state.balances[b.name] || 0) + won;
+      b.wonAmount = won;
+      // 경험치 획득: 당첨금 / 10000
+      const winExpGain = won / 10000;
+      const winLevelResult = addExp(b.name, winExpGain);
+      b.expGained = winExpGain;
+      if (winLevelResult.leveledUp) { b.leveledUp = true; b.oldLevel = winLevelResult.oldLevel; b.newLevel = winLevelResult.newLevel; }
+      // 류혁수의 은총: 기본 5% + 레벨% 확률
+      if (Math.random() < getBlessingChance(b.name)) { state.blessings[b.name] = 5; b.blessingTriggered = true; }
+      // 연승 갱신
+      state.streaks[b.name] = prevStreak > 0 ? prevStreak + 1 : 1;
+    } else {
+      b.won = false;
+      // 연패 갱신
+      state.streaks[b.name] = prevStreak < 0 ? prevStreak - 1 : -1;
+    }
+  });
+  await saveState();
+  closeResultModal(); renderAll();
+}
+
+function openResultSettle(matchId) {
+  const m = state.matches.find(x => x.id===matchId);
+  selectedResult = null;
+  document.getElementById('result-modal-content').innerHTML = `
+    <div class="modal-title" style="margin-bottom:.5rem">🏆 결과 입력</div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:1rem">${m.team1} vs ${m.team2} · ${m.date}</div>
+    <label style="font-size:13px;color:var(--text2);display:block;margin-bottom:6px">경기 결과 선택</label>
+    <div style="display:flex;gap:8px;margin-bottom:1rem">
+      <button class="odds-btn" id="res-team1" onclick="selectResult('team1')"><span class="odds-label">${m.team1} 승</span></button>
+      <button class="odds-btn" id="res-draw" onclick="selectResult('draw')"><span class="odds-label">무승부</span></button>
+      <button class="odds-btn" id="res-team2" onclick="selectResult('team2')"><span class="odds-label">${m.team2} 승</span></button>
+    </div>
+    <div id="settle-msg"></div>
+    <button class="btn btn-success btn-block" onclick="settleMatch('${matchId}')">정산하기</button>`;
+  document.getElementById('result-modal-overlay').style.display = 'flex';
+}
+
+function selectResult(r) {
+  selectedResult = r;
+  ['team1','draw','team2'].forEach(x => {
+    const el = document.getElementById('res-'+x);
+    if (el) el.classList.toggle('selected', x===r);
+  });
+}
+
+function closeResultModal() {
+  document.getElementById('result-modal-overlay').style.display = 'none';
+  selectedResult = null;
+}
+
+let selectedResultDate = null;
+
+function renderResults() {
+  const settled = state.matches.filter(m => m.status==='settled');
+  const tabsEl = document.getElementById('results-date-tabs');
+  const listEl = document.getElementById('results-list');
+  if (!settled.length) {
+    tabsEl.innerHTML = '';
+    listEl.innerHTML='<p style="color:var(--text2);font-size:14px;text-align:center;padding:2.5rem 0">정산된 경기가 없습니다.</p>';
+    return;
+  }
+  // 날짜 추출 (m.date 앞 10자 기준, 예: "2026.06.18")
+  const dateOf = m => m.date.trim().slice(0,10);
+  const allDates = [...new Set(settled.map(dateOf))].sort((a,b) => b.localeCompare(a)); // 최신순
+  // 선택된 날짜가 없거나 유효하지 않으면 가장 최근 날짜 선택
+  if (!selectedResultDate || !allDates.includes(selectedResultDate)) {
+    selectedResultDate = allDates[0];
+  }
+  // 날짜 탭 렌더링
+  tabsEl.innerHTML = allDates.map(date => {
+    const isActive = date === selectedResultDate;
+    return `<button onclick="selectResultDate('${date}')" style="padding:6px 14px;font-size:12px;font-weight:600;border-radius:20px;border:1px solid ${isActive?'var(--blue)':'var(--border2)'};background:${isActive?'var(--blue-bg)':'var(--bg3)'};color:${isActive?'var(--blue-text)':'var(--text2)'};cursor:pointer">${date}</button>`;
+  }).join('');
+  // 선택된 날짜의 경기만 렌더링
+  const filtered = settled.filter(m => dateOf(m) === selectedResultDate);
+  const rl = (m,r) => r==='team1'?`${m.team1} 승`:r==='draw'?'무승부':`${m.team2} 승`;
+  listEl.innerHTML = filtered.map(m => {
+    const bets = state.bets[m.id]||[];
+    const rows = bets.map(b => {
+      if (b.won) {
+        let extraHtml = '';
+        if (b.streakBonus) extraHtml += `<div style="font-size:12px;color:var(--green-text);margin-top:2px">🔥 ${b.streakCount}연승 가산 적용 (당첨금 +${b.streakBonus.toLocaleString()}원)</div>`;
+        if (b.blessingApplied) extraHtml += `<div style="font-size:12px;color:var(--yellow-text);margin-top:2px">🌟 은총 버프 적용 (당첨금 +${(b.blessingBonus||0).toLocaleString()}원)</div>`;
+        if (b.blessingTriggered) extraHtml += `<div style="font-size:12px;color:var(--yellow-text);font-weight:700;margin-top:2px">🌟 류혁수의 은총 발동! 앞으로 5경기 당첨금 +5% 가산 버프 획득</div>`;
+        if (b.levelBonus) extraHtml += `<div style="font-size:12px;color:var(--blue-text);margin-top:2px">⭐ Lv.${b.levelAtWin} 가산 적용 (당첨금 +${b.levelBonus.toLocaleString()}원)</div>`;
+        if (b.expGained) extraHtml += `<div style="font-size:11px;color:var(--text2);margin-top:2px">EXP +${b.expGained.toLocaleString()}</div>`;
+        if (b.leveledUp) extraHtml += `<div style="font-size:12px;color:var(--blue-text);font-weight:700;margin-top:2px">⭐ 레벨업! Lv.${b.oldLevel} → Lv.${b.newLevel}</div>`;
+        return `<div class="reveal-row" style="flex-direction:column;align-items:stretch">
+          <div style="display:flex;justify-content:space-between"><span style="font-weight:600">${b.name}</span><span style="color:var(--green-text);font-weight:600">${b.choiceLabel} <span class="badge badge-open">+${(b.wonAmount-b.amount).toLocaleString()}원</span></span><span style="color:var(--green-text)">→ ${b.wonAmount.toLocaleString()}원</span></div>
+          ${extraHtml}
+        </div>`;
+      }
+      return `<div class="reveal-row" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;justify-content:space-between"><span style="font-weight:600">${b.name}</span><span class="strike">${b.choiceLabel}</span><span style="color:var(--red-text)">-${b.amount.toLocaleString()}원</span></div>
+      </div>`;
+    }).join('');
+    return `<div class="match-card">
+      <div class="match-header"><span class="match-title">${m.team1} vs ${m.team2}</span><span class="badge badge-settled">정산완료</span></div>
+      <div class="match-date" style="margin-bottom:.6rem">📅 ${m.date} · 결과: <strong>${rl(m,m.result)}</strong></div>
+      ${rows||'<div style="font-size:13px;color:var(--text2)">배팅 없음</div>'}
+    </div>`;
+  }).join('');
+}
+
+function selectResultDate(date) {
+  selectedResultDate = date;
+  renderResults();
+}
+
+function getPendingBetAmount(name) {
+  // 아직 정산되지 않은 경기에 걸어둔 배팅 금액 합계
+  let total = 0;
+  state.matches.forEach(m => {
+    if (m.status === 'settled') return; // 정산된 경기는 이미 balance에 반영됨
+    (state.bets[m.id] || []).forEach(b => {
+      if (b.name === name) total += b.amount;
+    });
+  });
+  return total;
+}
+
+function getLoanAmount(name) {
+  const loan = state.loans && state.loans[name];
+  return loan ? Math.round(loan.amount) : 0;
+}
+
+function getTotalBalance(name) {
+  const cash = state.balances[name] ?? 0;
+  const pending = getPendingBetAmount(name);
+  const loan = getLoanAmount(name);
+  return cash + pending - loan;
+}
+
+function getHitRate(name) {
+  let total = 0, wins = 0;
+  Object.values(state.bets).forEach(bets => {
+    bets.forEach(b => {
+      if (b.name === name && b.won !== undefined) { total++; if (b.won) wins++; }
+    });
+  });
+  if (total === 0) return { total: 0, wins: 0, rate: null };
+  return { total, wins, rate: Math.round((wins/total)*100) };
+}
+
+// ── 레벨업 시스템
+// 레벨 N -> N+1 필요 경험치: 1->2=100, 이후 2->3=500, 3->4=1000 ... 500*(N-1)
+function expRequired(level) {
+  return level === 1 ? 100 : 500 * (level - 1);
+}
+
+function getLevelData(name) {
+  if (!state.levels) state.levels = {};
+  if (!state.levels[name]) state.levels[name] = { level: 1, exp: 0 };
+  return state.levels[name];
+}
+
+// 경험치 추가 후 레벨업 처리 (여러 레벨 동시 상승 가능)
+// 반환값: { leveledUp: bool, oldLevel, newLevel, gainedExp }
+function addExp(name, amount) {
+  const data = getLevelData(name);
+  const oldLevel = data.level;
+  data.exp += amount;
+  let required = expRequired(data.level);
+  while (data.exp >= required) {
+    data.exp -= required;
+    data.level += 1;
+    required = expRequired(data.level);
+  }
+  return { leveledUp: data.level > oldLevel, oldLevel, newLevel: data.level, gainedExp: amount };
+}
+
+function getLevel(name) {
+  return getLevelData(name).level;
+}
+
+// 류혁수의 은총 발동률: 기본 5% + 레벨% 가산
+function getBlessingChance(name) {
+  const level = getLevel(name);
+  return 0.05 + (level * 0.01);
+}
+
+function renderLeaderboard() {
+  const el = document.getElementById('leaderboard-list');
+  const PARTICIPANTS = state.participants || DEFAULT_PARTICIPANTS;
+  const sorted = [...PARTICIPANTS].sort((a,b) => getTotalBalance(b) - getTotalBalance(a));
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = sorted.map((name,i) => {
+    const cash = state.balances[name] ?? 0;
+    const total = getTotalBalance(name);
+    const diff = total - INITIAL_BALANCE;
+    const diffStr = diff===0?'±0':diff>0?'+'+diff.toLocaleString():diff.toLocaleString();
+    const diffColor = diff>0?'var(--green)':diff<0?'var(--red)':'var(--text2)';
+    const hr = getHitRate(name);
+    const hitStr = hr.rate===null ? '-' : `${hr.wins}/${hr.total} (${hr.rate}%)`;
+    const hitColor = hr.rate===null?'var(--text2)':hr.rate>=60?'var(--green)':hr.rate>=40?'var(--yellow)':'var(--red)';
+    const loan = getLoanAmount(name);
+    const loanStr = loan>0 ? `<div style="font-size:11px;color:var(--red-text);margin-top:1px">대출 ${loan.toLocaleString()}원</div>` : '';
+    const streak = (state.streaks && state.streaks[name]) || 0;
+    let streakStr = '';
+    if (streak >= 2) {
+      streakStr = `<div style="font-size:11px;color:var(--green-text);margin-top:1px">🔥 ${streak}연승 (+${(streak-1)*5}%)</div>`;
+    }
+    const levelData = getLevelData(name);
+    const expNeeded = expRequired(levelData.level);
+    const nickname = state.nicknames && state.nicknames[name];
+    const nameDisplay = (!hideNicknames && nickname)
+      ? `<span style="color:#f87171;font-size:12px">${nickname}</span> ${name}`
+      : name;
+    return `<div class="lb-row">
+      <span class="lb-rank">${medals[i]||i+1}</span>
+      <span class="lb-name">${nameDisplay} <span style="font-size:11px;font-weight:600;color:var(--blue-text);background:var(--blue-bg);padding:2px 7px;border-radius:10px;margin-left:4px">Lv.${levelData.level}</span></span>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:700">${cash.toLocaleString()}원 <span style="font-size:12px;font-weight:500;color:var(--text2)">(${total.toLocaleString()}원)</span></div>
+        <div style="font-size:12px;color:${diffColor};margin-bottom:2px">${diffStr}원</div>
+        <div style="font-size:11px;color:${hitColor}">적중 ${hitStr}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:1px">EXP ${levelData.exp.toLocaleString()} / ${expNeeded.toLocaleString()}</div>
+        ${loanStr}
+        ${streakStr}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function adjustBalance() {
+  const name = document.getElementById('adjust-name-select').value;
+  const type = document.getElementById('adjust-type-select').value;
+  const amt = parseInt(document.getElementById('adjust-amount-input').value);
+  const msgEl = document.getElementById('adjust-msg');
+  if (!name) { msgEl.innerHTML='<div class="msg msg-error">참가자를 선택하세요.</div>'; return; }
+  if (isNaN(amt) || amt < 0) { msgEl.innerHTML='<div class="msg msg-error">올바른 금액을 입력하세요.</div>'; return; }
+  const cur = state.balances[name] ?? 0;
+  if (type === 'add') state.balances[name] = cur + amt;
+  else if (type === 'sub') state.balances[name] = Math.max(0, cur - amt);
+  else state.balances[name] = amt;
+  await saveState();
+  renderLeaderboard();
+  const newBal = state.balances[name];
+  msgEl.innerHTML=`<div class="msg msg-success">✅ ${name}님 잔액 → ${newBal.toLocaleString()}원</div>`;
+  setTimeout(()=>{ msgEl.innerHTML=''; }, 3000);
+}
+
+// ── 대출 시스템
+const MAX_LOAN = 1000000;
+const DAILY_INTEREST_RATE = 0.10; // 자정마다 10% 이자
+
+// KST 기준 날짜 문자열 (YYYY-MM-DD)
+function todayKST() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9*60*60*1000); // UTC+9
+  return kst.toISOString().slice(0,10);
+}
+function daysBetween(dateStr1, dateStr2) {
+  const d1 = new Date(dateStr1 + 'T00:00:00Z');
+  const d2 = new Date(dateStr2 + 'T00:00:00Z');
+  return Math.round((d2 - d1) / (1000*60*60*24));
+}
+
+// 자정(00:00 KST) 경과분에 대해 10% 복리 이자 적용 — load할 때마다 체크
+function applyLoanInterest() {
+  if (!state.loans) return false;
+  const today = todayKST();
+  let changed = false;
+  Object.keys(state.loans).forEach(name => {
+    const loan = state.loans[name];
+    if (!loan || loan.amount <= 0) return;
+    const last = loan.lastInterestDate || loan.borrowedDate || today;
+    const days = daysBetween(last, today);
+    if (days > 0) {
+      let amt = loan.amount;
+      for (let i=0; i<days; i++) amt = amt * (1 + DAILY_INTEREST_RATE);
+      loan.amount = Math.round(amt);
+      loan.lastInterestDate = today;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+function setLoanAmt(v) { document.getElementById('loan-amount-input').value = v; }
+
+function renderLoanStatusList() {
+  const el = document.getElementById('loan-status-list');
+  if (!el) return;
+  const today = todayKST();
+  const PARTICIPANTS = state.participants || DEFAULT_PARTICIPANTS;
+  el.innerHTML = PARTICIPANTS.map(name => {
+    const loan = state.loans && state.loans[name];
+    const amt = getLoanAmount(name);
+    if (amt <= 0) {
+      return `<div class="lb-row"><span class="lb-name">${name}</span><span style="font-size:13px;color:var(--text2)">대출 없음</span></div>`;
+    }
+    const borrowedToday = loan.borrowedDate === today;
+    const statusTxt = borrowedToday ? '오늘 대출 (상환 불가)' : `${loan.borrowedDate} 대출`;
+    return `<div class="lb-row">
+      <span class="lb-name">${name}</span>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:700;color:var(--red-text)">${amt.toLocaleString()}원</div>
+        <div style="font-size:11px;color:var(--text2)">${statusTxt}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function e_refreshLoanStatus(name) {
+  const statusEl = document.getElementById('loan-status-msg');
+  if (!statusEl) return;
+  if (!name) { statusEl.innerHTML=''; return; }
+  const loan = state.loans && state.loans[name];
+  const loanAmt = getLoanAmount(name);
+  if (loanAmt > 0) {
+    const borrowedToday = loan.borrowedDate === todayKST();
+    const repayInfo = borrowedToday
+      ? '<br><span style="color:var(--yellow-text)">⚠️ 오늘 대출받은 금액은 오늘 상환할 수 없습니다. 최소 1일 후 상환 가능합니다.</span>'
+      : '';
+    statusEl.innerHTML = `<div class="msg msg-info">현재 대출금: <b>${loanAmt.toLocaleString()}원</b> (최대 ${MAX_LOAN.toLocaleString()}원)${repayInfo}</div>`;
+  } else {
+    statusEl.innerHTML = `<div class="msg msg-info">현재 대출금 없음 (최대 ${MAX_LOAN.toLocaleString()}원까지 대출 가능)</div>`;
+  }
+}
+
+document.addEventListener('change', (e) => {
+  if (e.target && e.target.id === 'loan-name-select') {
+    e_refreshLoanStatus(e.target.value);
+  }
+  if (e.target && e.target.id === 'bet-name-select') {
+    const name = e.target.value;
+    const el = document.getElementById('bet-blessing-msg');
+    if (!name) { el.innerHTML=''; return; }
+    const blessingLeft = (state.blessings && state.blessings[name]) || 0;
+    let html = '';
+    if (blessingLeft > 0) {
+      html += `<div class="msg msg-info">🌟 류혁수의 은총 보유 중! 이번 배팅 포함 앞으로 <b>${blessingLeft}경기</b> 당첨금 +5% 가산</div>`;
+    }
+    const streak = (state.streaks && state.streaks[name]) || 0;
+    if (streak >= 2) {
+      html += `<div class="msg msg-success">🔥 ${streak}연승 중! 이번 배팅 당첨 시 +${(streak-1)*5}% 가산</div>`;
+    }
+    const levelData = getLevelData(name);
+    if (levelData.level > 1) {
+      html += `<div class="msg msg-info">⭐ Lv.${levelData.level} · 당첨 시 당첨금 +${levelData.level}% 가산 · 은총 발동률 ${(getBlessingChance(name)*100).toFixed(0)}%</div>`;
+    }
+    el.innerHTML = html;
+  }
+});
+
+function checkLoanAuth(name, pw) {
+  if (!name) return '참가자를 선택하세요.';
+  if (!pw) return '비밀번호를 입력하세요.';
+  if (state.userPasswords[name] && state.userPasswords[name] !== pw) return '비밀번호가 맞지 않습니다.';
+  return null;
+}
+
+async function requestLoan() {
+  const name = document.getElementById('loan-name-select').value;
+  const pw = document.getElementById('loan-pw-input').value;
+  const amt = parseInt(document.getElementById('loan-amount-input').value);
+  const msgEl = document.getElementById('loan-modal-msg');
+  const authErr = checkLoanAuth(name, pw);
+  if (authErr) { msgEl.innerHTML=`<div class="msg msg-error">${authErr}</div>`; return; }
+  if (!amt || amt < 1000) { msgEl.innerHTML='<div class="msg msg-error">최소 1,000원 이상 입력하세요.</div>'; return; }
+  if (!state.userPasswords[name]) state.userPasswords[name] = pw;
+  const curLoan = getLoanAmount(name);
+  if (curLoan + amt > MAX_LOAN) {
+    msgEl.innerHTML = `<div class="msg msg-error">최대 대출 한도(${MAX_LOAN.toLocaleString()}원) 초과. 현재 대출금 ${curLoan.toLocaleString()}원, 최대 ${ (MAX_LOAN-curLoan).toLocaleString() }원까지 추가 가능합니다.</div>`;
+    return;
+  }
+  if (!state.loans) state.loans = {};
+  const today = todayKST();
+  const existing = state.loans[name];
+  state.loans[name] = {
+    amount: curLoan + amt,
+    // 기존 대출이 있으면 borrowedDate는 유지(가장 오래된 기준), 없으면 오늘로 시작
+    borrowedDate: (existing && existing.amount > 0) ? existing.borrowedDate : today,
+    lastInterestDate: today
+  };
+  state.balances[name] = (state.balances[name] ?? 0) + amt;
+  await saveState();
+  renderLeaderboard();
+  renderLoanStatusList();
+  document.getElementById('loan-amount-input').value = '';
+  msgEl.innerHTML = `<div class="msg msg-success">✅ ${amt.toLocaleString()}원 대출 완료! 현재 대출금: ${state.loans[name].amount.toLocaleString()}원</div>`;
+  // 대출 상태 메시지 갱신
+  e_refreshLoanStatus(name);
+}
+
+async function repayLoan() {
+  const name = document.getElementById('loan-name-select').value;
+  const pw = document.getElementById('loan-pw-input').value;
+  const amt = parseInt(document.getElementById('loan-amount-input').value);
+  const msgEl = document.getElementById('loan-modal-msg');
+  const authErr = checkLoanAuth(name, pw);
+  if (authErr) { msgEl.innerHTML=`<div class="msg msg-error">${authErr}</div>`; return; }
+  if (!amt || amt < 1000) { msgEl.innerHTML='<div class="msg msg-error">최소 1,000원 이상 입력하세요.</div>'; return; }
+  const loan = state.loans && state.loans[name];
+  const curLoan = getLoanAmount(name);
+  if (curLoan <= 0) { msgEl.innerHTML='<div class="msg msg-error">상환할 대출금이 없습니다.</div>'; return; }
+  if (loan.borrowedDate === todayKST()) {
+    msgEl.innerHTML = '<div class="msg msg-error">오늘 대출받은 금액은 오늘 상환할 수 없습니다. 최소 1일 후 상환 가능합니다.</div>';
+    return;
+  }
+  const curBal = state.balances[name] ?? 0;
+  if (amt > curBal) { msgEl.innerHTML=`<div class="msg msg-error">잔액 부족 (현재 현금 ${curBal.toLocaleString()}원)</div>`; return; }
+  const repayAmt = Math.min(amt, curLoan);
+  const remaining = curLoan - repayAmt;
+  state.loans[name] = remaining > 0
+    ? { amount: remaining, borrowedDate: loan.borrowedDate, lastInterestDate: loan.lastInterestDate }
+    : { amount: 0, borrowedDate: null, lastInterestDate: null };
+  state.balances[name] = curBal - repayAmt;
+  await saveState();
+  renderLeaderboard();
+  renderLoanStatusList();
+  document.getElementById('loan-amount-input').value = '';
+  msgEl.innerHTML = `<div class="msg msg-success">✅ ${repayAmt.toLocaleString()}원 상환 완료! 남은 대출금: ${state.loans[name].amount.toLocaleString()}원</div>`;
+  e_refreshLoanStatus(name);
+}
+
+// 폴링 (5초마다 갱신)
+async function poll() { await loadState(); setTimeout(poll, 30000); }
+
+loadState().then(() => setTimeout(poll, 30000));
+</script>
+</body>
+</html>
